@@ -179,7 +179,7 @@ func TestWithSimulated(t *testing.T) {
 		if tr == "unix" || tr == "unixgram" {
 			defer os.Remove(addr)
 		}
-		s, err := Dial(tr, addr, LOG_INFO|LOG_USER, "syslog_test")
+		s, err := Dial(tr, addr, LOG_INFO|LOG_USER, "syslog_test", "test_host")
 		if err != nil {
 			t.Fatalf("Dial() failed: %v", err)
 		}
@@ -204,7 +204,7 @@ func TestFlap(t *testing.T) {
 	defer os.Remove(addr)
 	defer sock.Close()
 
-	s, err := Dial(net, addr, LOG_INFO|LOG_USER, "syslog_test")
+	s, err := Dial(net, addr, LOG_INFO|LOG_USER, "syslog_test", "test_host")
 	if err != nil {
 		t.Fatalf("Dial() failed: %v", err)
 	}
@@ -240,7 +240,7 @@ func TestNew(t *testing.T) {
 		t.Skip("skipping syslog test during -short")
 	}
 
-	s, err := New(LOG_INFO|LOG_USER, "the_tag")
+	s, err := New(LOG_INFO|LOG_USER, "the_tag", "test_host")
 	if err != nil {
 		t.Fatalf("New() failed: %s", err)
 	}
@@ -262,15 +262,15 @@ func TestDial(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping syslog test during -short")
 	}
-	f, err := Dial("", "", (LOG_LOCAL7|LOG_DEBUG)+1, "syslog_test")
+	f, err := Dial("", "", (LOG_LOCAL7|LOG_DEBUG)+1, "syslog_test", "test_host")
 	if f != nil {
 		t.Fatalf("Should have trapped bad priority")
 	}
-	f, err = Dial("", "", -1, "syslog_test")
+	f, err = Dial("", "", -1, "syslog_test", "test_host")
 	if f != nil {
 		t.Fatalf("Should have trapped bad priority")
 	}
-	l, err := Dial("", "", LOG_USER|LOG_ERR, "syslog_test")
+	l, err := Dial("", "", LOG_USER|LOG_ERR, "syslog_test", "test_host")
 	if err != nil {
 		t.Fatalf("Dial() failed: %s", err)
 	}
@@ -278,7 +278,7 @@ func TestDial(t *testing.T) {
 }
 
 func TestDialFails(t *testing.T) {
-	w, err := Dial("udp", "fakehost", LOG_ERR, "tag")
+	w, err := Dial("udp", "fakehost", LOG_ERR, "tag", "test_host")
 	if err == nil {
 		t.Errorf("should fail to dial")
 	}
@@ -288,7 +288,7 @@ func TestDialFails(t *testing.T) {
 }
 
 func TestDialTLSFails(t *testing.T) {
-	w, err := DialWithTLSCertPath("tcp+tls", "127.0.0.1:0", LOG_ERR, "syslog_test", "test/nocertfound.pem")
+	w, err := DialWithTLSCertPath("tcp+tls", "127.0.0.1:0", LOG_ERR, "syslog_test", "test/nocertfound.pem", "test_host")
 	if w != nil {
 		t.Fatalf("Should not have a writer")
 	}
@@ -298,11 +298,7 @@ func TestDialTLSFails(t *testing.T) {
 }
 
 func check(t *testing.T, in, out string) {
-	if hostname, err := os.Hostname(); err != nil {
-		t.Error("Error retrieving hostname")
-	} else {
-		checkWithPriorityAndTag(t, LOG_USER+LOG_INFO, "syslog_test", hostname, in, out)
-	}
+	checkWithPriorityAndTag(t, LOG_USER+LOG_INFO, "syslog_test", "test_host", in, out)
 }
 
 func checkWithPriorityAndTag(t *testing.T, p Priority, tag, hostname, in, out string) {
@@ -337,7 +333,7 @@ func TestWrite(t *testing.T) {
 			addr, sock, srvWG := startServer("udp", "", done)
 			defer srvWG.Wait()
 			defer sock.Close()
-			l, err := Dial("udp", addr, test.pri, test.pre)
+			l, err := Dial("udp", addr, test.pri, test.pre, "test_host")
 			if err != nil {
 				t.Fatalf("syslog.Dial() failed: %v", err)
 			}
@@ -379,7 +375,7 @@ func TestTLSPathWrite(t *testing.T) {
 			defer srvWG.Wait()
 			defer sock.Close()
 
-			l, err := DialWithTLSCertPath("tcp+tls", addr, test.pri, test.pre, "test/cert.pem")
+			l, err := DialWithTLSCertPath("tcp+tls", addr, test.pri, test.pre, "test/cert.pem", "test_host")
 			if err != nil {
 				t.Fatalf("syslog.Dial() failed: %v", err)
 			}
@@ -426,7 +422,7 @@ func TestTLSCertWrite(t *testing.T) {
 				t.Fatalf("cold not read cert: %v", err)
 			}
 
-			l, err := DialWithTLSCert("tcp+tls", addr, test.pri, test.pre, cert)
+			l, err := DialWithTLSCert("tcp+tls", addr, test.pri, test.pre, cert, "test_host")
 			if err != nil {
 				t.Fatalf("syslog.Dial() failed: %v", err)
 			}
@@ -450,7 +446,7 @@ func TestConcurrentWrite(t *testing.T) {
 	addr, sock, srvWG := startServer("udp", "", make(chan string, 1))
 	defer srvWG.Wait()
 	defer sock.Close()
-	w, err := Dial("udp", addr, LOG_USER|LOG_ERR, "how's it going?")
+	w, err := Dial("udp", addr, LOG_USER|LOG_ERR, "how's it going?", "test_host")
 	if err != nil {
 		t.Fatalf("syslog.Dial() failed: %v", err)
 	}
@@ -509,7 +505,7 @@ func TestConcurrentReconnect(t *testing.T) {
 	for i := 0; i < N; i++ {
 		go func() {
 			defer wg.Done()
-			w, err := Dial(net, addr, LOG_USER|LOG_ERR, "tag")
+			w, err := Dial(net, addr, LOG_USER|LOG_ERR, "tag", "test_host")
 			if err != nil {
 				t.Fatalf("syslog.Dial() failed: %v", err)
 			}
