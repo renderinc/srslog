@@ -90,6 +90,12 @@ func (w *Writer) WriteWithPriority(p Priority, b []byte) (int, error) {
 	return w.writeAndRetryWithPriority(p, string(b))
 }
 
+// WriteWithTag logs a message with the default priority and a custom tag. 
+func (w *Writer) WriteWithTag(message string, tag string) (err error) {
+	_, err = w.writeAndRetryWithTag(tag, message)
+	return err
+}
+
 // Close closes a connection to the syslog daemon.
 func (w *Writer) Close() error {
 	conn := w.getConn()
@@ -165,12 +171,11 @@ func (w *Writer) writeAndRetry(severity Priority, s string) (int, error) {
 	return w.writeAndRetryWithPriority(pr, s)
 }
 
-// writeAndRetryWithPriority differs from writeAndRetry in that it allows setting
-// of both the facility and the severity.
-func (w *Writer) writeAndRetryWithPriority(p Priority, s string) (int, error) {
+// writeAndRetry takes a tag and the string to write.
+func (w *Writer) writeAndRetryWithTag(t string, s string) (int, error) {
 	conn := w.getConn()
 	if conn != nil {
-		if n, err := w.write(conn, p, s); err == nil {
+		if n, err := w.write(conn, w.priority, s, t); err == nil {
 			return n, err
 		}
 	}
@@ -179,12 +184,30 @@ func (w *Writer) writeAndRetryWithPriority(p Priority, s string) (int, error) {
 	if conn, err = w.connect(); err != nil {
 		return 0, err
 	}
-	return w.write(conn, p, s)
+	return w.write(conn, w.priority, s, t)
+}
+
+// writeAndRetryWithPriority differs from writeAndRetry in that it allows setting
+// of both the facility and the severity.
+func (w *Writer) writeAndRetryWithPriority(p Priority, s string) (int, error) {
+	conn := w.getConn()
+	t := w.tag
+	if conn != nil {
+		if n, err := w.write(conn, p, s, t); err == nil {
+			return n, err
+		}
+	}
+
+	var err error
+	if conn, err = w.connect(); err != nil {
+		return 0, err
+	}
+	return w.write(conn, p, s, t)
 }
 
 // write generates and writes a syslog formatted string. It formats the
 // message based on the current Formatter and Framer.
-func (w *Writer) write(conn serverConn, p Priority, msg string) (int, error) {
+func (w *Writer) write(conn serverConn, p Priority, msg string, tag string) (int, error) {
 	// ensure it ends in a \n
 	if !strings.HasSuffix(msg, "\n") {
 		msg += "\n"
