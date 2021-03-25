@@ -33,8 +33,8 @@ func New(priority Priority, tag string) (w *Writer, err error) {
 // Writer sends a log message with the given facility, severity and
 // tag.
 // If network is empty, Dial will connect to the local syslog server.
-func Dial(network, raddr string, priority Priority, tag string) (*Writer, error) {
-	return DialWithTLSConfig(network, raddr, priority, tag, nil)
+func Dial(network, raddr string, priority Priority, tag string, hostname string) (*Writer, error) {
+	return DialWithTLSConfig(network, raddr, priority, tag, nil, hostname)
 }
 
 // ErrNilDialFunc is returned from DialWithCustomDialer when a nil DialFunc is passed,
@@ -46,46 +46,46 @@ var ErrNilDialFunc = errors.New("srslog: nil DialFunc passed to DialWithCustomDi
 // Network must be "custom" in order for this package to use customDial.
 // While network and raddr will be passed to customDial, it is allowed for customDial to ignore them.
 // If customDial is nil, this function returns ErrNilDialFunc.
-func DialWithCustomDialer(network, raddr string, priority Priority, tag string, customDial DialFunc) (*Writer, error) {
+func DialWithCustomDialer(network, raddr string, priority Priority, tag string, customDial DialFunc, hostname string) (*Writer, error) {
 	if customDial == nil {
 		return nil, ErrNilDialFunc
 	}
-	return dialAllParameters(network, raddr, priority, tag, nil, customDial)
+	return dialAllParameters(network, raddr, priority, tag, nil, customDial, hostname)
 }
 
 // DialWithTLSCertPath establishes a secure connection to a log daemon by connecting to
 // address raddr on the specified network. It uses certPath to load TLS certificates and configure
 // the secure connection.
-func DialWithTLSCertPath(network, raddr string, priority Priority, tag, certPath string) (*Writer, error) {
+func DialWithTLSCertPath(network, raddr string, priority Priority, tag, certPath string, hostname string) (*Writer, error) {
 	serverCert, err := ioutil.ReadFile(certPath)
 	if err != nil {
 		return nil, err
 	}
 
-	return DialWithTLSCert(network, raddr, priority, tag, serverCert)
+	return DialWithTLSCert(network, raddr, priority, tag, serverCert, hostname)
 }
 
 // DialWIthTLSCert establishes a secure connection to a log daemon by connecting to
 // address raddr on the specified network. It uses serverCert to load a TLS certificate
 // and configure the secure connection.
-func DialWithTLSCert(network, raddr string, priority Priority, tag string, serverCert []byte) (*Writer, error) {
+func DialWithTLSCert(network, raddr string, priority Priority, tag string, serverCert []byte, hostname string) (*Writer, error) {
 	pool := x509.NewCertPool()
 	pool.AppendCertsFromPEM(serverCert)
 	config := tls.Config{
 		RootCAs: pool,
 	}
 
-	return DialWithTLSConfig(network, raddr, priority, tag, &config)
+	return DialWithTLSConfig(network, raddr, priority, tag, &config, hostname)
 }
 
 // DialWithTLSConfig establishes a secure connection to a log daemon by connecting to
 // address raddr on the specified network. It uses tlsConfig to configure the secure connection.
-func DialWithTLSConfig(network, raddr string, priority Priority, tag string, tlsConfig *tls.Config) (*Writer, error) {
-	return dialAllParameters(network, raddr, priority, tag, tlsConfig, nil)
+func DialWithTLSConfig(network, raddr string, priority Priority, tag string, tlsConfig *tls.Config, hostname string) (*Writer, error) {
+	return dialAllParameters(network, raddr, priority, tag, tlsConfig, nil, hostname)
 }
 
 // implementation of the various functions above
-func dialAllParameters(network, raddr string, priority Priority, tag string, tlsConfig *tls.Config, customDial DialFunc) (*Writer, error) {
+func dialAllParameters(network, raddr string, priority Priority, tag string, tlsConfig *tls.Config, customDial DialFunc, hostname string) (*Writer, error) {
 	if err := validatePriority(priority); err != nil {
 		return nil, err
 	}
@@ -93,7 +93,6 @@ func dialAllParameters(network, raddr string, priority Priority, tag string, tls
 	if tag == "" {
 		tag = os.Args[0]
 	}
-	hostname, _ := os.Hostname()
 
 	w := &Writer{
 		priority:   priority,
