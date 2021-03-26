@@ -24,6 +24,11 @@ type Writer struct {
 	conn serverConn
 }
 
+// GetEndpoint returns the remote address in place for the writer
+func (w *Writer) GetEndpoint() string {
+	return w.raddr
+}
+
 // getConn provides access to the internal conn, protected by a mutex. The
 // conn is threadsafe, so it can be used while unlocked, but we want to avoid
 // race conditions on grabbing a reference to it.
