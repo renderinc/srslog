@@ -51,8 +51,7 @@ func truncateStartStr(s string, max int) string {
 func RFC5424Formatter(p Priority, t time.Time, hostname, tag, content string) string {
 	timestamp := t.Format(time.RFC3339)
 	pid := os.Getpid()
-	appName := truncateStartStr(os.Args[0], appNameMaxLength)
 	msg := fmt.Sprintf("<%d>%d %s %s %s %d %s - %s",
-		p, 1, timestamp, hostname, appName, pid, tag, content)
+		p, 1, timestamp, hostname, tag, pid, tag, content)
 	return msg
 }
