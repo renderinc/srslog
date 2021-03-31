@@ -3,13 +3,13 @@ package srslog
 import (
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 	"time"
-	"strings"
 )
 
 func TestDefaultFormatter(t *testing.T) {
-	out := DefaultFormatter(LOG_ERR, "hostname", "tag", "content")
+	out := DefaultFormatter(LOG_ERR, time.Now(), "hostname", "tag", "content")
 	expected := fmt.Sprintf("<%d> %s %s %s[%d]: %s",
 		LOG_ERR, time.Now().Format(time.RFC3339), "hostname", "tag", os.Getpid(), "content")
 	if out != expected {
@@ -18,7 +18,7 @@ func TestDefaultFormatter(t *testing.T) {
 }
 
 func TestUnixFormatter(t *testing.T) {
-	out := UnixFormatter(LOG_ERR, "hostname", "tag", "content")
+	out := UnixFormatter(LOG_ERR, time.Now(), "hostname", "tag", "content")
 	expected := fmt.Sprintf("<%d>%s %s[%d]: %s",
 		LOG_ERR, time.Now().Format(time.Stamp), "tag", os.Getpid(), "content")
 	if out != expected {
@@ -27,7 +27,7 @@ func TestUnixFormatter(t *testing.T) {
 }
 
 func TestRFC3164Formatter(t *testing.T) {
-	out := RFC3164Formatter(LOG_ERR, "hostname", "tag", "content")
+	out := RFC3164Formatter(LOG_ERR, time.Now(), "hostname", "tag", "content")
 	expected := fmt.Sprintf("<%d>%s %s %s[%d]: %s",
 		LOG_ERR, time.Now().Format(time.Stamp), "hostname", "tag", os.Getpid(), "content")
 	if out != expected {
@@ -36,7 +36,7 @@ func TestRFC3164Formatter(t *testing.T) {
 }
 
 func TestRFC5424Formatter(t *testing.T) {
-	out := RFC5424Formatter(LOG_ERR, "hostname", "tag", "content")
+	out := RFC5424Formatter(LOG_ERR, time.Now(), "hostname", "tag", "content")
 	expected := fmt.Sprintf("<%d>%d %s %s %s %d %s - %s",
 		LOG_ERR, 1, time.Now().Format(time.RFC3339), "hostname", truncateStartStr(os.Args[0], appNameMaxLength),
 			os.Getpid(), "tag", "content")

@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"strings"
 	"sync"
+	"time"
 )
 
 // A Writer is a connection to a syslog server.
@@ -95,9 +96,9 @@ func (w *Writer) WriteWithPriority(p Priority, b []byte) (int, error) {
 	return w.writeAndRetryWithPriority(p, string(b))
 }
 
-// WriteWithTag logs a message with the default priority and a custom tag / hostname. 
-func (w *Writer) WriteWithTagAndHostname(message string, tag string, hostname string) (err error) {
-	_, err = w.writeAndRetryWithTagAndHostname(tag, message, hostname)
+// WriteWithTag logs a message with the default priority and a custom tag / hostname / time. 
+func (w *Writer) WriteWithTagAndHostnameAndTime(message string, tag string, hostname string, t time.Time) (err error) {
+	_, err = w.writeAndRetryWithTagAndHostname(tag, message, hostname, t)
 	return err
 }
 
@@ -177,10 +178,10 @@ func (w *Writer) writeAndRetry(severity Priority, s string) (int, error) {
 }
 
 // writeAndRetry takes a tag and the string to write.
-func (w *Writer) writeAndRetryWithTagAndHostname(t string, s string, h string) (int, error) {
+func (w *Writer) writeAndRetryWithTagAndHostname(tag string, message string, hostname string, logtime time.Time) (int, error) {
 	conn := w.getConn()
 	if conn != nil {
-		if n, err := w.write(conn, w.priority, s, t, h); err == nil {
+		if n, err := w.write(conn, w.priority, logtime, message, tag, hostname); err == nil {
 			return n, err
 		}
 	}
@@ -189,7 +190,7 @@ func (w *Writer) writeAndRetryWithTagAndHostname(t string, s string, h string) (
 	if conn, err = w.connect(); err != nil {
 		return 0, err
 	}
-	return w.write(conn, w.priority, s, t, h)
+	return w.write(conn, w.priority, logtime, message, tag, hostname)
 }
 
 // writeAndRetryWithPriority differs from writeAndRetry in that it allows setting
@@ -199,7 +200,7 @@ func (w *Writer) writeAndRetryWithPriority(p Priority, s string) (int, error) {
 	t := w.tag
 	h := w.hostname
 	if conn != nil {
-		if n, err := w.write(conn, p, s, t, h); err == nil {
+		if n, err := w.write(conn, p, time.Now(), s, t, h); err == nil {
 			return n, err
 		}
 	}
@@ -208,18 +209,18 @@ func (w *Writer) writeAndRetryWithPriority(p Priority, s string) (int, error) {
 	if conn, err = w.connect(); err != nil {
 		return 0, err
 	}
-	return w.write(conn, p, s, t, h)
+	return w.write(conn, p, time.Now(), s, t, h)
 }
 
 // write generates and writes a syslog formatted string. It formats the
 // message based on the current Formatter and Framer.
-func (w *Writer) write(conn serverConn, p Priority, msg string, tag string, hostname string) (int, error) {
+func (w *Writer) write(conn serverConn, p Priority, t time.Time, msg string, tag string, hostname string) (int, error) {
 	// ensure it ends in a \n
 	if !strings.HasSuffix(msg, "\n") {
 		msg += "\n"
 	}
 
-	err := conn.writeString(w.framer, w.formatter, p, hostname, tag, msg)
+	err := conn.writeString(w.framer, w.formatter, p, t, hostname, tag, msg)
 	if err != nil {
 		return 0, err
 	}
