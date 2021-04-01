@@ -139,6 +139,10 @@ func (c testLocalConn) Write(b []byte) (int, error) {
 	return len(b), nil
 }
 
-func (c testLocalConn) Close() error {
+func (c testLocalConn) close() error {
 	return nil
+}
+
+func (c testLocalConn) Close() error {
+	return c.close()
 }
