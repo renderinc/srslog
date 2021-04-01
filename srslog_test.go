@@ -533,7 +533,7 @@ func TestConcurrentReconnect(t *testing.T) {
 
 func TestLocalConn(t *testing.T) {
 	messages := make([]string, 0)
-	conn := newTestLocalConn(&messages)
+	conn := NewTestLocalConn(&messages)
 
 	lc := localConn{conn: conn}
 
@@ -546,23 +546,4 @@ func TestLocalConn(t *testing.T) {
 	if messages[0] != DefaultFramer(UnixFormatter(LOG_ERR, time.Now(), "hostname", "tag", "content")) {
 		t.Errorf("should use the unix formatter")
 	}
-}
-
-type testLocalConn struct {
-	messages *[]string
-}
-
-func NewTestLocalConn(messages *[]string) testLocalConn {
-	return testLocalConn{
-		messages: messages,
-	}
-}
-
-func (c testLocalConn) Write(b []byte) (int, error) {
-	*c.messages = append(*c.messages, string(b))
-	return len(b), nil
-}
-
-func (c testLocalConn) Close() error {
-	return nil
 }

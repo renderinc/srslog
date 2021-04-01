@@ -123,3 +123,22 @@ func NewLogger(p Priority, logFlag int) (*log.Logger, error) {
 	}
 	return log.New(s, "", logFlag), nil
 }
+
+type testLocalConn struct {
+	messages *[]string
+}
+
+func NewTestLocalConn(messages *[]string) testLocalConn {
+	return testLocalConn{
+		messages: messages,
+	}
+}
+
+func (c testLocalConn) Write(b []byte) (int, error) {
+	*c.messages = append(*c.messages, string(b))
+	return len(b), nil
+}
+
+func (c testLocalConn) Close() error {
+	return nil
+}
