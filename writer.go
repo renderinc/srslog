@@ -47,6 +47,11 @@ func (w *Writer) setConn(c serverConn) {
 	w.mu.Unlock()
 }
 
+// SetConn updates the internal conn, protected by a mutex.
+func (w *Writer) SetConn(c serverConn) {
+	w.setConn(c)
+}
+
 // connect makes a connection to the syslog server.
 func (w *Writer) connect() (serverConn, error) {
 	conn := w.getConn()

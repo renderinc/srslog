@@ -552,7 +552,7 @@ type testLocalConn struct {
 	messages *[]string
 }
 
-func newTestLocalConn(messages *[]string) testLocalConn {
+func NewTestLocalConn(messages *[]string) testLocalConn {
 	return testLocalConn{
 		messages: messages,
 	}
