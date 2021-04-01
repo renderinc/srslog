@@ -139,6 +139,11 @@ func (c testLocalConn) Write(b []byte) (int, error) {
 	return len(b), nil
 }
 
+func(c testLocalConn) writeString(framer Framer, formatter Formatter, p Priority, t time.Time, hostname, tag, s string) error {
+	*c.messages = append(*c.messages, s)
+	return nil
+}
+
 func (c testLocalConn) close() error {
 	return nil
 }
