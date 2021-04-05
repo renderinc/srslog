@@ -14,7 +14,7 @@ import (
 // This interface allows us to work with both local and network connections,
 // and enables Solaris support (see syslog_unix.go).
 type serverConn interface {
-	writeString(framer Framer, formatter Formatter, p Priority, t time.Time, hostname, tag, s string) error
+	writeString(framer Framer, formatter Formatter, p Priority, t time.Time, hostname, tag, s, token string) error
 	close() error
 }
 
@@ -139,7 +139,7 @@ func (c testLocalConn) Write(b []byte) (int, error) {
 	return len(b), nil
 }
 
-func(c testLocalConn) writeString(framer Framer, formatter Formatter, p Priority, t time.Time, hostname, tag, s string) error {
+func(c testLocalConn) writeString(framer Framer, formatter Formatter, p Priority, t time.Time, hostname, tag, s, token string) error {
 	*c.messages = append(*c.messages, s)
 	return nil
 }

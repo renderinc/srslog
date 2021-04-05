@@ -38,14 +38,14 @@ type localConn struct {
 
 // writeString formats syslog messages using time.Stamp instead of time.RFC3339,
 // and omits the hostname (because it is expected to be used locally).
-func (n *localConn) writeString(framer Framer, formatter Formatter, p Priority, t time.Time, hostname, tag, msg string) error {
+func (n *localConn) writeString(framer Framer, formatter Formatter, p Priority, t time.Time, hostname, tag, msg, token string) error {
 	if framer == nil {
 		framer = DefaultFramer
 	}
 	if formatter == nil {
 		formatter = UnixFormatter
 	}
-	_, err := n.conn.Write([]byte(framer(formatter(p, t, hostname, tag, msg))))
+	_, err := n.conn.Write([]byte(framer(formatter(p, t, hostname, tag, msg, token))))
 	return err
 }
 

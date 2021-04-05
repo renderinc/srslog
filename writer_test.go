@@ -97,7 +97,7 @@ func TestWriteFormatters(t *testing.T) {
 		if f == nil {
 			f = DefaultFormatter
 		}
-		expected := strings.TrimSpace(f(LOG_ERR, time.Now(), "hostname", "tag", "this is a test message"))
+		expected := strings.TrimSpace(f(LOG_ERR, time.Now(), "hostname", "tag", "this is a test message", ""))
 
 		_, err = w.Write([]byte("this is a test message"))
 		if err != nil {
@@ -146,7 +146,7 @@ func TestWriterFramers(t *testing.T) {
 		if f == nil {
 			f = DefaultFramer
 		}
-		expected := strings.TrimSpace(f(DefaultFormatter(LOG_ERR, time.Now(), "hostname", "tag", "this is a test message") + "\n"))
+		expected := strings.TrimSpace(f(DefaultFormatter(LOG_ERR, time.Now(), "hostname", "tag", "this is a test message", "") + "\n"))
 
 		_, err = w.Write([]byte("this is a test message"))
 		if err != nil {

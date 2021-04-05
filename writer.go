@@ -14,6 +14,7 @@ type Writer struct {
 	hostname  string
 	network   string
 	raddr     string
+	token 	  string
 	tlsConfig *tls.Config
 	framer    Framer
 	formatter Formatter
@@ -78,6 +79,11 @@ func (w *Writer) connect() (serverConn, error) {
 // SetFormatter changes the formatter function for subsequent messages.
 func (w *Writer) SetFormatter(f Formatter) {
 	w.formatter = f
+}
+
+// SetToken changes the token for subsequent messages.
+func (w *Writer) SetToken(t string) {
+	w.token = t
 }
 
 // SetFramer changes the framer function for subsequent messages.
@@ -225,7 +231,7 @@ func (w *Writer) write(conn serverConn, p Priority, t time.Time, msg string, tag
 		msg += "\n"
 	}
 
-	err := conn.writeString(w.framer, w.formatter, p, t, hostname, tag, msg)
+	err := conn.writeString(w.framer, w.formatter, p, t, hostname, tag, msg, w.token)
 	if err != nil {
 		return 0, err
 	}
