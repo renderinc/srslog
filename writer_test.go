@@ -48,13 +48,13 @@ func TestSetHostname(t *testing.T) {
 	}
 	defer w.Close()
 
-	if strings.Split(w.hostname, ":")[0] != "127.0.0.1" {
-		t.Errorf("expected hostname: %s, got %s", "127.0.0.1", strings.Split(w.hostname, ":")[0])
+	if strings.Split(w.getHostname(), ":")[0] != "127.0.0.1" {
+		t.Errorf("expected hostname: %s, got %s", "127.0.0.1", strings.Split(w.getHostname(), ":")[0])
 	}
 
 	w.SetHostname(customHostname)
-	if w.hostname != expected {
-		t.Errorf("expected hostname: %s, got %s", expected, w.hostname)
+	if w.getHostname() != expected {
+		t.Errorf("expected hostname: %s, got %s", expected, w.getHostname())
 	}
 	<-done
 }

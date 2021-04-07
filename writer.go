@@ -11,7 +11,10 @@ import (
 type Writer struct {
 	priority  Priority
 	tag       string
+
+	hostnameMu  sync.RWMutex
 	hostname  string
+
 	network   string
 	raddr     string
 	tlsConfig *tls.Config
@@ -31,6 +34,23 @@ type Writer struct {
 // GetEndpoint returns the remote address in place for the writer
 func (w *Writer) GetEndpoint() string {
 	return w.raddr
+}
+
+// SetHostname changes the hostname for syslog messages if needed.
+func (w *Writer) SetHostname(hostname string) {
+	w.setHostname(hostname)
+}
+
+func (w *Writer) getHostname() string {
+	w.hostnameMu.RLock()
+	defer w.hostnameMu.RUnlock()
+	return w.hostname
+}
+
+func (w *Writer) setHostname(h string) {
+	w.hostnameMu.Lock()
+	defer w.hostnameMu.Unlock()
+	w.hostname = h
 }
 
 // getConn provides access to the internal conn, protected by a mutex. The
@@ -70,7 +90,7 @@ func (w *Writer) connect() (serverConn, error) {
 	conn, hostname, err = dialer.Call()
 	if err == nil {
 		w.setConn(conn)
-		w.hostname = hostname
+		w.setHostname(hostname)
 
 		return conn, nil
 	} else {
@@ -95,11 +115,6 @@ func (w *Writer) getFramer() Framer {
 	w.framerMu.RLock()
 	defer w.framerMu.RUnlock()
 	return w.framer
-}
-
-// SetHostname changes the hostname for syslog messages if needed.
-func (w *Writer) SetHostname(hostname string) {
-	w.hostname = hostname
 }
 
 // Write sends a log message to the syslog daemon using the default priority
@@ -215,7 +230,7 @@ func (w *Writer) writeAndRetryWithTagAndHostname(tag string, message string, hos
 func (w *Writer) writeAndRetryWithPriority(p Priority, s string) (int, error) {
 	conn := w.getConn()
 	t := w.tag
-	h := w.hostname
+	h := w.getHostname()
 	if conn != nil {
 		if n, err := w.write(conn, p, time.Now(), s, t, h); err == nil {
 			return n, err

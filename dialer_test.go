@@ -74,7 +74,7 @@ func TestUnixDialer(t *testing.T) {
 		t.Errorf("should set blank hostname")
 	}
 
-	w.hostname = "my other hostname"
+	w.setHostname("my other hostname")
 
 	_, hostname, err = w.unixDialer()
 
@@ -121,7 +121,7 @@ func TestTLSDialer(t *testing.T) {
 		t.Errorf("should set default hostname")
 	}
 
-	w.hostname = "my other hostname"
+	w.setHostname("my other hostname")
 
 	_, hostname, err = w.tlsDialer()
 
@@ -157,7 +157,7 @@ func TestTCPDialer(t *testing.T) {
 		t.Errorf("should set default hostname")
 	}
 
-	w.hostname = "my other hostname"
+	w.setHostname("my other hostname")
 
 	_, hostname, err = w.basicDialer()
 
@@ -193,7 +193,7 @@ func TestUDPDialer(t *testing.T) {
 		t.Errorf("should set default hostname")
 	}
 
-	w.hostname = "my other hostname"
+	w.setHostname("my other hostname")
 
 	_, hostname, err = w.basicDialer()
 
@@ -236,7 +236,7 @@ func TestCustomDialer(t *testing.T) {
 		t.Errorf("should set default hostname")
 	}
 
-	w.hostname = "my other hostname"
+	w.setHostname("my other hostname")
 
 	_, hostname, err = w.customDialer()
 

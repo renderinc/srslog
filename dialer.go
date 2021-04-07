@@ -50,7 +50,7 @@ func (w *Writer) getDialer() dialerFunctionWrapper {
 // daemon running on the local machine.
 func (w *Writer) unixDialer() (serverConn, string, error) {
 	sc, err := unixSyslog()
-	hostname := w.hostname
+	hostname := w.getHostname()
 	if hostname == "" {
 		hostname = "localhost"
 	}
@@ -62,7 +62,7 @@ func (w *Writer) unixDialer() (serverConn, string, error) {
 func (w *Writer) tlsDialer() (serverConn, string, error) {
 	c, err := tls.Dial("tcp", w.raddr, w.tlsConfig)
 	var sc serverConn
-	hostname := w.hostname
+	hostname := w.getHostname()
 	if err == nil {
 		sc = &netConn{conn: c}
 		if hostname == "" {
@@ -77,7 +77,7 @@ func (w *Writer) tlsDialer() (serverConn, string, error) {
 func (w *Writer) basicDialer() (serverConn, string, error) {
 	c, err := net.Dial(w.network, w.raddr)
 	var sc serverConn
-	hostname := w.hostname
+	hostname := w.getHostname()
 	if err == nil {
 		sc = &netConn{conn: c}
 		if hostname == "" {
@@ -93,7 +93,7 @@ func (w *Writer) basicDialer() (serverConn, string, error) {
 func (w *Writer) customDialer() (serverConn, string, error) {
 	c, err := w.customDial(w.network, w.raddr)
 	var sc serverConn
-	hostname := w.hostname
+	hostname := w.getHostname()
 	if err == nil {
 		sc = &netConn{conn: c}
 		if hostname == "" {
