@@ -64,7 +64,7 @@ func TestWriteFormatters(t *testing.T) {
 		name string
 		f    Formatter
 	}{
-		{"default", nil},
+		{"default", DefaultFormatter},
 		{"unix", UnixFormatter},
 		{"rfc 3164", RFC3164Formatter},
 		{"rfc 5424", RFC5424Formatter},
@@ -132,6 +132,7 @@ func TestWriterFramers(t *testing.T) {
 			hostname: "hostname",
 			network:  "udp",
 			raddr:    addr,
+			formatter: DefaultFormatter,
 		}
 
 		_, err := w.connect()

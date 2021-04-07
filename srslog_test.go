@@ -302,7 +302,7 @@ func check(t *testing.T, in, out string) {
 }
 
 func checkWithPriorityAndTag(t *testing.T, p Priority, tag, hostname, in, out string) {
-	tmpl := fmt.Sprintf("<%d>%%s %%s %s[%%d]: %s\n", p, tag, in)
+	tmpl := fmt.Sprintf("<%d>%d %%s %%s %s %%d %s - %s\n", p, 1, tag, tag, in)
 	var parsedHostname, timestamp string
 	var pid int
 	if n, err := fmt.Sscanf(out, tmpl, &timestamp, &parsedHostname, &pid); n != 3 || err != nil {
@@ -334,6 +334,7 @@ func TestWrite(t *testing.T) {
 			defer srvWG.Wait()
 			defer sock.Close()
 			l, err := Dial("udp", addr, test.pri, test.pre, "test_host")
+			l.SetFormatter(DefaultFormatter)
 			if err != nil {
 				t.Fatalf("syslog.Dial() failed: %v", err)
 			}
@@ -343,7 +344,7 @@ func TestWrite(t *testing.T) {
 				t.Fatalf("WriteString() failed: %v", err)
 			}
 			rcvd := <-done
-			test.exp = fmt.Sprintf("<%d>", test.pri) + test.exp
+			test.exp = fmt.Sprintf("<%d> ", test.pri) + test.exp
 			var parsedHostname, timestamp string
 			var pid int
 			if n, err := fmt.Sscanf(rcvd, test.exp, &timestamp, &parsedHostname, &pid); n != 3 || err != nil || hostname != parsedHostname {
