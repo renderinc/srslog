@@ -15,13 +15,16 @@ type Writer struct {
 	network   string
 	raddr     string
 	tlsConfig *tls.Config
+
+	framerMu  sync.RWMutex
 	framer    Framer
+
 	formatter Formatter
 
 	//non-nil if custom dialer set, used in getDialer
 	customDial DialFunc
 
-	mu   sync.RWMutex // guards conn
+	connMu   sync.RWMutex // guards conn
 	conn serverConn
 }
 
@@ -34,17 +37,17 @@ func (w *Writer) GetEndpoint() string {
 // conn is threadsafe, so it can be used while unlocked, but we want to avoid
 // race conditions on grabbing a reference to it.
 func (w *Writer) getConn() serverConn {
-	w.mu.RLock()
+	w.connMu.RLock()
 	conn := w.conn
-	w.mu.RUnlock()
+	w.connMu.RUnlock()
 	return conn
 }
 
 // setConn updates the internal conn, protected by a mutex.
 func (w *Writer) setConn(c serverConn) {
-	w.mu.Lock()
+	w.connMu.Lock()
 	w.conn = c
-	w.mu.Unlock()
+	w.connMu.Unlock()
 }
 
 // SetConn updates the internal conn, protected by a mutex.
@@ -82,7 +85,16 @@ func (w *Writer) SetFormatter(f Formatter) {
 
 // SetFramer changes the framer function for subsequent messages.
 func (w *Writer) SetFramer(f Framer) {
+	w.framerMu.Lock()
+	defer w.framerMu.Unlock()
 	w.framer = f
+}
+
+// SetFramer changes the framer function for subsequent messages.
+func (w *Writer) getFramer() Framer {
+	w.framerMu.RLock()
+	defer w.framerMu.RUnlock()
+	return w.framer
 }
 
 // SetHostname changes the hostname for syslog messages if needed.
@@ -225,7 +237,7 @@ func (w *Writer) write(conn serverConn, p Priority, t time.Time, msg string, tag
 		msg += "\n"
 	}
 
-	err := conn.writeString(w.framer, w.formatter, p, t, hostname, tag, msg)
+	err := conn.writeString(w.getFramer(), w.formatter, p, t, hostname, tag, msg)
 	if err != nil {
 		return 0, err
 	}
