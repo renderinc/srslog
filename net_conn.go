@@ -18,8 +18,9 @@ func (n *netConn) writeString(framer Framer, formatter Formatter, p Priority, t 
 		framer = DefaultFramer
 	}
 	if formatter == nil {
-		formatter = DefaultFormatter
+		formatter = RFC5424Formatter
 	}
+
 	formattedMessage := framer(formatter(p, t, hostname, tag, msg))
 	_, err := n.conn.Write([]byte(formattedMessage))
 	return err
