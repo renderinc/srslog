@@ -140,6 +140,13 @@ func (c testLocalConn) Write(b []byte) (int, error) {
 }
 
 func(c testLocalConn) writeString(framer Framer, formatter Formatter, p Priority, t time.Time, hostname, tag, s string) error {
+	if framer == nil {
+		framer = DefaultFramer
+	}
+	if formatter == nil {
+		formatter = RFC5424Formatter
+	}
+
 	formattedMessage := framer(formatter(p, t, hostname, tag, s))
 	*c.messages = append(*c.messages, formattedMessage)
 	return nil
