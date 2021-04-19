@@ -49,7 +49,7 @@ func truncateStartStr(s string, max int) string {
 
 // RFC5424Formatter provides an RFC 5424 compliant message.
 func RFC5424Formatter(p Priority, t time.Time, hostname, tag, content string) string {
-	timestamp := t.Format(time.RFC3339)
+	timestamp := t.Format(time.RFC3339Nano)
 	pid := os.Getpid()
 	msg := fmt.Sprintf("<%d>%d %s %s %s %d %s - %s",
 		p, 1, timestamp, hostname, tag, pid, tag, content)
