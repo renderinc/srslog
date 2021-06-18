@@ -22,6 +22,7 @@ type Writer struct {
 	framerMu  sync.RWMutex
 	framer    Framer
 
+	formatterMu  sync.RWMutex
 	formatter Formatter
 
 	//non-nil if custom dialer set, used in getDialer
@@ -29,6 +30,11 @@ type Writer struct {
 
 	connMu   sync.RWMutex // guards conn
 	conn serverConn
+}
+
+// DangerouslySetEndpoint sets the remote address, this should only be used for tests
+func (w *Writer) DangerouslySetEndpoint(r string) {
+	w.raddr = r
 }
 
 // GetEndpoint returns the remote address in place for the writer
@@ -100,7 +106,15 @@ func (w *Writer) connect() (serverConn, error) {
 
 // SetFormatter changes the formatter function for subsequent messages.
 func (w *Writer) SetFormatter(f Formatter) {
+	w.formatterMu.Lock()
+	defer w.formatterMu.Unlock()
 	w.formatter = f
+}
+
+func (w *Writer) getFormatter() Formatter {
+	w.formatterMu.RLock()
+	defer w.formatterMu.RUnlock()
+	return w.formatter
 }
 
 // SetFramer changes the framer function for subsequent messages.
@@ -252,7 +266,7 @@ func (w *Writer) write(conn serverConn, p Priority, t time.Time, msg string, tag
 		msg += "\n"
 	}
 
-	err := conn.writeString(w.getFramer(), w.formatter, p, t, hostname, tag, msg)
+	err := conn.writeString(w.getFramer(), w.getFormatter(), p, t, hostname, tag, msg)
 	if err != nil {
 		return 0, err
 	}
